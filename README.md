@@ -17,3 +17,11 @@ Q2: Neural Network Basics (30 points)
 Q3: word2vec (40 points + 5 bonus)
 
 Q4: Sentiment Analysis (20 points)
+
+PSet2:
+1 Tensorﬂow Softmax (20 points)
+2 Deep Networks for Named Entity Recognition (35 points)
+3 Recurrent Neural Networks: Language Modeling (45 points)
+
+PSet3:
+1 RNN’s (Recursive Neural Network)
