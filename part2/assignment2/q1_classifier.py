@@ -33,7 +33,7 @@ class SoftmaxModel(Model):
         self.config.n_samples, self.config.n_features)
     self.input_labels = np.ones((self.config.n_samples,), dtype=np.int32)
 
-  def add_placeholders(self):
+  def add_placeholders(self): #############################################################################
     """Generate placeholder variables to represent the input tensors.
 
     These placeholders are used as inputs by the rest of the model building
@@ -54,10 +54,11 @@ class SoftmaxModel(Model):
     (Don't change the variable names)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    self.input_placeholder=tf.placeholder(tf.float32,shape=(self.config.batch_size,self.config.n_features)) #shape
+    self.labels_placeholder=tf.placeholder(tf.int32,shape=(self.config.batch_size,self.config.n_classes))
     ### END YOUR CODE
 
-  def create_feed_dict(self, input_batch, label_batch):
+  def create_feed_dict(self, input_batch, label_batch): ###############################################################################
     """Creates the feed_dict for softmax classifier.
 
     A feed_dict takes the form of:
@@ -79,7 +80,8 @@ class SoftmaxModel(Model):
       feed_dict: The feed dictionary mapping from placeholders to values.
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    feed_dict={self.input_placeholder:input_batch,
+               self.labels_placeholder:label_batch} #placeholder1=batch data,..
     ### END YOUR CODE
     return feed_dict
 
@@ -103,7 +105,9 @@ class SoftmaxModel(Model):
       train_op: The Op for training.
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    optimizer=tf.train.GradientDescentOptimizer(self.config.lr) #1.get optimizer
+    global_step = tf.Variable(0, name='global_step', trainable=False) #not important at the moment. just a variable for counter steps.
+    train_op=optimizer.minimize(loss, global_step=global_step) #2.minimize loss
     ### END YOUR CODE
     return train_op
 
@@ -127,7 +131,16 @@ class SoftmaxModel(Model):
       out: A tensor of shape (batch_size, n_classes)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    with tf.variable_scope("linear_softmax"):
+        #W=tf.get_variable("W",(self.n_features,1),initializer=tf.random_normal_initializer(),dtype=tf.float32)
+        #b=tf.get_variable("b",(self.batch_size,),initializer=tf.constant_initializer(0.0),dtype=tf.float32)
+        #1.create variables W,b
+        weights=tf.Variable(tf.zeros([self.config.n_features,self.config.n_classes]),name='weights')
+        biases=tf.Variable(tf.zeros([self.config.n_classes]),name='biases')
+        #2.score=X.dot(W)+b
+        logits=tf.matmul(input_data,weights)+biases
+        #3.apply softmax to score to get possibilites
+        out=softmax(logits)
     ### END YOUR CODE
     return out
 
@@ -142,7 +155,9 @@ class SoftmaxModel(Model):
       loss: A 0-d tensor (scalar)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    print "self.input_labels:",self.input_labels.shape #(1024,)
+    print "pred:",pred.get_shape() #(64, 5)
+    loss=cross_entropy_loss(self.labels_placeholder, pred)
     ### END YOUR CODE
     return loss
 

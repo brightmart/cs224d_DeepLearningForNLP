@@ -22,8 +22,14 @@ def softmax(x):
   """
 
   ### YOUR CODE HERE
-  #raise NotImplementedError
-  #TODO...............................
+  max_eachrow=tf.reduce_max(x,reduction_indices=[1]) #1.get max for each row. max_eachrow=np.max(x,axis=1,keepdims=True)
+  max_eachrow_=tf.expand_dims(max_eachrow,1)                    
+  x=x-max_eachrow_ #2.subtract x with max of each row. a2=tf.reshape(a,(1,4)).eval()
+  probs=tf.exp(x) #3.exp operation. probs=np.exp(x)
+  sum_eachrow=tf.reduce_sum(probs,reduction_indices=[1]) #4.get sum for each row.sum_eachrow=np.sum(probs,axis=1,keepdims=True)
+  sum_eachrow=tf.expand_dims(sum_eachrow,1)
+  probs=probs/sum_eachrow #5.get probilibities.
+  out=probs
   ### END YOUR CODE
   
   return out 
@@ -51,7 +57,14 @@ def cross_entropy_loss(y, yhat):
           tensor in the problem.
   """
   ### YOUR CODE HERE
-  raise NotImplementedError
+  #1.get log of yhat
+  y=tf.to_float(y)
+  
+  #1.get log of yhat
+  yhat_log=tf.log(yhat)
+  #2.multiply 
+  mul=-1.0*tf.mul(y,yhat_log)
+  out=tf.reduce_sum(mul)
   ### END YOUR CODE
   return out
 

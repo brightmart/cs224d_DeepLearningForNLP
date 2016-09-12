@@ -2,15 +2,17 @@ import os
 import getpass
 import sys
 import time
-
+#BRIGHT
 import numpy as np
 import tensorflow as tf
 from q2_initialization import xavier_weight_init
-import data_utils.utils as du
+import data_utils.utils as du 
 import data_utils.ner as ner
-from utils import data_iterator
+from utils import data_iterator 
 from model import LanguageModel
 
+#from q1_softmax import softmax ###
+#from q1_softmax import cross_entropy_loss ###
 class Config(object):
   """Holds model hyperparams and data information.
 
@@ -19,14 +21,14 @@ class Config(object):
   instantiation.
   """
   embed_size = 50
-  batch_size = 64
+  batch_size = 64 
   label_size = 5
-  hidden_size = 100
-  max_epochs = 24 
-  early_stopping = 2
+  hidden_size = 100 
+  max_epochs =24
+  early_stopping =2
   dropout = 0.9
-  lr = 0.001
-  l2 = 0.001
+  lr =0.001
+  l2 =0.001
   window_size = 3
 
 class NERModel(LanguageModel):
@@ -39,22 +41,21 @@ class NERModel(LanguageModel):
 
   def load_data(self, debug=False):
     """Loads starter word-vectors and train/dev/test data."""
-    # Load the starter word vectors
+    # 1.Load the starter word vectors
     self.wv, word_to_num, num_to_word = ner.load_wv(
       'data/ner/vocab.txt', 'data/ner/wordVectors.txt')
     tagnames = ['O', 'LOC', 'MISC', 'ORG', 'PER']
     self.num_to_tag = dict(enumerate(tagnames))
     tag_to_num = {v:k for k,v in self.num_to_tag.iteritems()}
 
-    # Load the training set
+    # 2.Load the training set
     docs = du.load_dataset('data/ner/train')
     self.X_train, self.y_train = du.docs_to_windows(
         docs, word_to_num, tag_to_num, wsize=self.config.window_size)
     if debug:
       self.X_train = self.X_train[:1024]
       self.y_train = self.y_train[:1024]
-
-    # Load the dev set (for tuning hyperparameters)
+    # 3.Load the dev set (for tuning hyperparameters)
     docs = du.load_dataset('data/ner/dev')
     self.X_dev, self.y_dev = du.docs_to_windows(
         docs, word_to_num, tag_to_num, wsize=self.config.window_size)
@@ -62,7 +63,7 @@ class NERModel(LanguageModel):
       self.X_dev = self.X_dev[:1024]
       self.y_dev = self.y_dev[:1024]
 
-    # Load the test set (dummy labels only)
+    # 4.Load the test set (dummy labels only)
     docs = du.load_dataset('data/ner/test.masked')
     self.X_test, self.y_test = du.docs_to_windows(
         docs, word_to_num, tag_to_num, wsize=self.config.window_size)
@@ -92,7 +93,13 @@ class NERModel(LanguageModel):
     (Don't change the variable names)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    #raise NotImplementedError  ##############################################################################################################1
+    input_placeholder=tf.placeholder(tf.int32,shape=(None,self.config.window_size),name="Input")
+    labels_placeholder=tf.placeholder(tf.float32,shape=(None,self.config.label_size),name="Target")
+    dropout_placeholder=tf.placeholder(tf.float32,name="Dropout") #shape=None
+    self.input_placeholder=input_placeholder
+    self.labels_placeholder=labels_placeholder
+    self.dropout_placeholder=dropout_placeholder
     ### END YOUR CODE
 
   def create_feed_dict(self, input_batch, dropout, label_batch=None):
@@ -117,7 +124,12 @@ class NERModel(LanguageModel):
       feed_dict: The feed dictionary mapping from placeholders to values.
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+                           ##############################################################################################################2 
+    feed_dict={self.input_placeholder:input_batch}
+    if label_batch is not None:
+        feed_dict[self.labels_placeholder]=label_batch
+    if dropout is not None:
+        feed_dict[self.dropout_placeholder]=dropout
     ### END YOUR CODE
     return feed_dict
 
@@ -148,11 +160,14 @@ class NERModel(LanguageModel):
     # The embedding lookup is currently only implemented for the CPU
     with tf.device('/cpu:0'):
       ### YOUR CODE HERE
-      raise NotImplementedError
-      ### END YOUR CODE
+      #raise NotImplementedError  ##############################################################################################################3    
+      embeddings=tf.get_variable("embeddings",(len(self.wv), self.config.embed_size)) #use default initializer.initializer=tf.random_normal_initializer()
+      window = tf.nn.embedding_lookup(embeddings, self.input_placeholder)
+      window=tf.reshape(window,(-1,self.config.window_size*self.config.embed_size))
+      ### END YOUR CODE 
       return window
 
-  def add_model(self, window):
+  def add_model(self, window): #IMPORTANT IMPORTANT IMPORTANT
     """Adds the 1-hidden-layer NN.
 
     Hint: Use a variable_scope (e.g. "Layer") for the first hidden layer, and
@@ -180,7 +195,24 @@ class NERModel(LanguageModel):
       output: tf.Tensor of shape (batch_size, label_size)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    #raise NotImplementedError  ##############################################################################################################4
+    #######################################xavier_weight_init,Regularization,dropout 
+    with tf.variable_scope('Layer', initializer=xavier_weight_init())  as scope:                                    
+        W=tf.get_variable('W',[self.config.window_size*self.config.embed_size,self.config.hidden_size]) 
+        b1=tf.get_variable('b1',[self.config.hidden_size]) 
+        z2=tf.matmul(window,W)+b1                                    
+        h=tf.nn.tanh(z2)
+        if self.config.l2:
+            tf.add_to_collection('total_loss',0.5*self.config.l2*tf.nn.l2_loss(W)) ##loss_reg=0.5*self.config.lr*(tf.reduce_sum(W*W)+tf.reduce_sum(U*U))
+        
+    with tf.variable_scope('Softmax', initializer=xavier_weight_init()) as scope:
+        U=tf.get_variable('U',[self.config.hidden_size,self.config.label_size]) 
+        b2=tf.get_variable('b2',[self.config.label_size]) 
+        z3=tf.matmul(h,U)+b2
+        if self.config.l2:
+            tf.add_to_collection('total_loss',0.5*self.config.l2*tf.nn.l2_loss(U))
+    z3=tf.nn.dropout(z3, self.dropout_placeholder) #dropout
+    output=z3
     ### END YOUR CODE
     return output 
 
@@ -195,7 +227,17 @@ class NERModel(LanguageModel):
       loss: A 0-d tensor (scalar)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    #raise NotImplementedError ##############################################################################################################5
+    loss_data=tf.nn.softmax_cross_entropy_with_logits(y,self.labels_placeholder)                       
+    loss_data=tf.reduce_mean(loss_data) #/number_traning #number_traning=self.X_train.shape[0] ######################################################reduce_mean is equal to reduce_sum
+    tf.add_to_collection('total_loss',loss_data)
+    loss=tf.add_n(tf.get_collection('total_loss'))
+    #with tf.variable_scope("Layer",reuse=True): #ValueError: Trying to share variable Layer/W, but specified shape (1,) and found shape (150, 100).
+    #    W=tf.get_variable("W") #print "W.shape:",W.get_shape()  #W.shape: (150, 100)
+    #    U=tf.get_variable("U")
+    #loss_reg=0.5*self.config.lr*(tf.reduce_sum(W*W)+tf.reduce_sum(U*U)) #ValueError: Incompatible shapes for broadcasting: (150, 100) and (100, 5)
+    #print "loss_reg:",loss_reg.get_shape(),"loss_data:",loss_data.get_shape()
+
     ### END YOUR CODE
     return loss
 
@@ -219,14 +261,19 @@ class NERModel(LanguageModel):
       train_op: The Op for training.
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    #raise NotImplementedError  ##############################################################################################################6
+    global_step=tf.Variable(0,name='global_step',trainable=False)
+    #decay_steps=800 #TODO
+    #learning_rate= tf.train.exponential_decay(self.config.lr, global_step, decay_steps, 0.96) #ADD learning rate decay...
+    optimizer=tf.train.AdamOptimizer(self.config.lr) #self.config.lr
+    train_op=optimizer.minimize(loss,global_step=global_step)
     ### END YOUR CODE
     return train_op
 
   def __init__(self, config):
     """Constructs the network using the helper functions defined above."""
     self.config = config
-    self.load_data(debug=False)
+    self.load_data(debug=False) ###debug=False#############################################################################################################7
     self.add_placeholders()
     window = self.add_embedding()
     y = self.add_model(window)
@@ -343,8 +390,7 @@ def test_NER():
       session.run(init)
       for epoch in xrange(config.max_epochs):
         print 'Epoch {}'.format(epoch)
-        start = time.time()
-        ###
+        start = time.time() ################################################################
         train_loss, train_acc = model.run_epoch(session, model.X_train,
                                                 model.y_train)
         val_loss, predictions = model.predict(session, model.X_dev, model.y_dev)
@@ -363,7 +409,7 @@ def test_NER():
         ###
         confusion = calculate_confusion(config, predictions, model.y_dev)
         print_confusion(confusion, model.num_to_tag)
-        print 'Total time: {}'.format(time.time() - start)
+        print 'Total time: {}'.format(time.time() - start) #################################################################
       
       saver.restore(session, './weights/ner.weights')
       print 'Test'

@@ -13,7 +13,7 @@ class Model(object):
     """
     raise NotImplementedError("Each Model must re-implement this method.")
 
-  def add_placeholders(self):
+  def add_placeholders(self):####################################################################
     """Adds placeholder variables to tensorflow computational graph.
 
     Tensorflow uses placeholder variables to represent locations in a
@@ -27,7 +27,7 @@ class Model(object):
     """
     raise NotImplementedError("Each Model must re-implement this method.")
 
-  def create_feed_dict(self, input_batch, label_batch):
+  def create_feed_dict(self, input_batch, label_batch):###################################################
     """Creates the feed_dict for training the given step.
 
     A feed_dict takes the form of:

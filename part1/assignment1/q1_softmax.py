@@ -22,7 +22,8 @@ def softmax(x):
     ### YOUR CODE HERE
     D=x.shape
     if len(D)==2:
-        probs = np.exp(x - np.max(x, axis=1, keepdims=True)) #max operation according to row: means for each row, get a max value.
+		max_eachrow=np.max(x, axis=1, keepdims=True)
+        probs = np.exp(x -max_eachrow ) #max operation according to row: means for each row, get a max value.
         probs /= np.sum(probs, axis=1, keepdims=True)        #sum operation according to row: means for each row, get a sum value
     elif len(D)==1: #one dimension
         max=np.max(x)
