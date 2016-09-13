@@ -137,11 +137,8 @@ class SoftmaxModel(Model):
     ### YOUR CODE HERE
     n_features, n_classes = self.config.n_features, self.config.n_classes
     with tf.name_scope('softmax_linear'):
-      weights = tf.Variable(
-          tf.zeros([n_features, n_classes]),
-          name='weights')
-      biases = tf.Variable(tf.zeros([n_classes]),
-                           name='biases')
+      weights = tf.Variable(tf.zeros([n_features, n_classes]),name='weights')
+      biases = tf.Variable(tf.zeros([n_classes]),name='biases')
       logits = tf.matmul(input_data, weights) + biases
       out = softmax(logits)
     ### END YOUR CODE
