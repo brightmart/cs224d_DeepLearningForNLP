@@ -10,7 +10,7 @@ import tensorflow as tf
 import tree as tr
 from utils import Vocab
 
-
+#Recursive Nenural Net: Positive/Negative Sentiment Analysis of Sentences using Standford Sentiment Dataset
 RESET_AFTER = 50
 class Config(object):
     """Holds model hyperparams and data information.
@@ -18,10 +18,11 @@ class Config(object):
     """
     embed_size = 35
     label_size = 2
+    output_size=label_size ######################add by Bright. 2016.09.03
     early_stopping = 2
     anneal_threshold = 0.99
     anneal_by = 1.5
-    max_epochs = 30
+    max_epochs = 1 #30 ######################################################################################################
     lr = 0.01
     l2 = 0.02
     model_name = 'rnn_embed=%d_l2=%f_lr=%f.weights'%(embed_size, l2, lr)
@@ -31,12 +32,12 @@ class RNN_Model():
 
     def load_data(self):
         """Loads train/dev/test data and builds vocabulary."""
-        self.train_data, self.dev_data, self.test_data = tr.simplified_data(700, 100, 200)
+        self.train_data, self.dev_data, self.test_data = tr.simplified_data(700, 100, 200) #load train/dev/test data
 
         # build vocab from training data
-        self.vocab = Vocab()
+        self.vocab = Vocab() #get a Vocab object with many functions.e.g. construct,add...
         train_sents = [t.get_words() for t in self.train_data]
-        self.vocab.construct(list(itertools.chain.from_iterable(train_sents)))
+        self.vocab.construct(list(itertools.chain.from_iterable(train_sents))) #calling construct of vocab to add sentences. # chain('ABC', 'DEF') --> A B C D E F
 
     def inference(self, tree, predict_only_root=False):
         """For a given tree build the RNN models computation graph up to where it
@@ -51,8 +52,8 @@ class RNN_Model():
             node_tensors = node_tensors[tree.root]
         else:
             node_tensors = [tensor for node, tensor in node_tensors.iteritems() if node.label!=2]
-            node_tensors = tf.concat(0, node_tensors)
-        return self.add_projections(node_tensors)
+            node_tensors = tf.concat(0, node_tensors) #t1 = [[1, 2, 3], [4, 5, 6]] t2 = [[7, 8, 9], [10, 11, 12]] ======> tf.concat(0, [t1, t2]) ==> [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        return self.add_projections(node_tensors) #e.g. like [3.3,4.0,1.0,15.0,....]
 
     def add_model_vars(self):
         '''
@@ -69,20 +70,25 @@ class RNN_Model():
         '''
         with tf.variable_scope('Composition'):
             ### YOUR CODE HERE
-            pass
+            #pass #################################################################################################1.
+            tf.get_variable("embedding",[self.vocab.total_words, self.config.embed_size])
+            tf.get_variable("W1",[2*self.config.embed_size,self.config.embed_size])
+            tf.get_variable("b1",[1,self.config.embed_size])
             ### END YOUR CODE
         with tf.variable_scope('Projection'):
             ### YOUR CODE HERE
-            pass
+            #pass ##################################################################################################2
+            tf.get_variable("U",[self.config.embed_size,self.config.label_size])
+            tf.get_variable("bs",[1,self.config.label_size])   
             ### END YOUR CODE
 
     def add_model(self, node):
         """Recursively build the model to compute the phrase embeddings in the tree
 
-        Hint: Refer to tree.py and vocab.py before you start. Refer to
+        Hint: Refer to tree.py and vocab.py before you start. Refer to 
               the model's vocab with self.vocab
         Hint: Reuse the "Composition" variable_scope here
-        Hint: Store a node's vector representation in node.tensor so it can be
+        Hint: Store a node's vector representation in node_tensor so it can be   # node.tensor--------> node_tensor
               used by it's parent
         Hint: If node is a leaf node, it's vector representation is just that of the
               word vector (see tf.gather()).
@@ -93,23 +99,37 @@ class RNN_Model():
         """
         with tf.variable_scope('Composition', reuse=True):
             ### YOUR CODE HERE
-            pass
+            #pass #################################################################################################3.ADD MODEL IS IMPORTANT PART.
+            embedding=tf.get_variable("embedding")
+            W1=tf.get_variable("W1")
+            b1=tf.get_variable("b1")
+            #node_left_right_=[node.left,node.right]
+            #node_left_right=tf.convert_to_tensor(node_left_right_)
             ### END YOUR CODE
 
 
         node_tensors = dict()
         curr_node_tensor = None
-        if node.isLeaf:
+        if node.isLeaf: #it's vector representation is just that of the word vector (see tf.gather())
             ### YOUR CODE HERE
-            pass
+            #pass #################################################################################################4.
+            #curr_node_tensor=tf.nn.embedding_lookup(embedding,node)
+            word_id = self.vocab.encode(node.word) #word_to_index              tf.expand_dims(input, dim)----->Inserts a dimension of 1 into a tensor's shape.
+			                                                                 # 't' is a tensor of shape [2].shape(expand_dims(t, 0)) ==> [1, 2]
+            curr_node_tensor = tf.expand_dims(tf.gather(embedding, word_id), 0) #tf.gather(params, indices)--->Gather slices from params according to indices
+            #tf.gather(node) 
             ### END YOUR CODE
-        else:
-            node_tensors.update(self.add_model(node.left))
-            node_tensors.update(self.add_model(node.right))
+        else: #it is not a leaf
+            node_tensors.update(self.add_model(node.left)) #operation:recursive dict0.update---->add key-value pairs to dict0
+            node_tensors.update(self.add_model(node.right))#operation:recursive 
             ### YOUR CODE HERE
-            pass
+            #pass #################################################################################################5.
+                                                         #t1 = [[1, 2, 3], [4, 5, 6]] t2 = [[7, 8, 9], [10, 11, 12]] ======> tf.concat(0, [t1, t2]) ==> [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+            child_tensor = tf.concat(1, [node_tensors[node.left], node_tensors[node.right]])            
+            z=tf.matmul(child_tensor,W1)+b1 
+            curr_node_tensor=tf.nn.relu(z,0) 
             ### END YOUR CODE
-        node_tensors[node] = curr_node_tensor
+        node_tensors[node] = curr_node_tensor #add value to dict-----> value('curr_node_tensor') to dict('node_tensors') with key('node')
         return node_tensors
 
     def add_projections(self, node_tensors):
@@ -123,7 +143,11 @@ class RNN_Model():
         """
         logits = None
         ### YOUR CODE HERE
-        pass
+        #pass #################################################################################################6.
+        with tf.variable_scope("Projection",reuse=True):
+            U=tf.get_variable("U")
+            bs=tf.get_variable("bs")
+            logits=tf.matmul(node_tensors,U)+bs
         ### END YOUR CODE
         return logits
 
@@ -140,7 +164,22 @@ class RNN_Model():
         """
         loss = None
         # YOUR CODE HERE
-        pass
+        #pass #################################################################################################7
+        #1.get and add data loss
+        loss_data=tf.nn.sparse_softmax_cross_entropy_with_logits(labels,logits) #calling functions of softmax,cross entropy loss by providing label and un-flattenned scores
+        loss_data=tf.reduce_mean(loss_data) #get a single number by taking mean of the data.
+        #tf.add_to_collection('total_loss',loss_data) #add the loss to total loss.
+        #2.get and add regularization loss
+        with tf.variable_scope('Composition', reuse=True):
+            W1=tf.get_variable("W1")
+            #b1=tf.get_variable("b1")
+        with tf.variable_scope('Projection', reuse=True):
+            U=tf.get_variable("U")
+            #bs=tf.get_variable("bs")
+        loss_regularization=self.config.l2*(tf.nn.l2_loss(W1)+tf.nn.l2_loss(U))
+        #tf.add_to_collection('total_loss',loss_regularization)
+        #loss=tf.add_n(tf.get_collection('total_loss'))
+        loss=loss_data+loss_regularization
         # END YOUR CODE
         return loss
 
@@ -165,7 +204,10 @@ class RNN_Model():
         """
         train_op = None
         # YOUR CODE HERE
-        pass
+        #pass #################################################################################################8.
+        optimizer=tf.train.GradientDescentOptimizer(self.config.lr)
+        #global_step=tf.Variable(0,name='global_step',trainable=False)
+        train_op=optimizer.minimize(loss) #,global_step=global_step
         # END YOUR CODE
         return train_op
 
@@ -179,11 +221,13 @@ class RNN_Model():
         """
         predictions = None
         # YOUR CODE HERE
-        pass
+        #pass #################################################################################################9.
+        print "y:",y
+        predictions=tf.argmax(y, 1) #each row get a index which element has highest value.
         # END YOUR CODE
         return predictions
 
-    def __init__(self, config):
+    def __init__(self, config): #when init, assign config, and load data to RNN
         self.config = config
         self.load_data()
 
@@ -191,25 +235,26 @@ class RNN_Model():
         """Make predictions from the provided model."""
         results = []
         losses = []
-        for i in xrange(int(math.ceil(len(trees)/float(RESET_AFTER)))):
+        for i in xrange(int(math.ceil(len(trees)/float(RESET_AFTER)))): #math.ceil--->get the nearest int.
             with tf.Graph().as_default(), tf.Session() as sess:
                 self.add_model_vars()
                 saver = tf.train.Saver()
                 saver.restore(sess, weights_path)
                 for tree in trees[i*RESET_AFTER: (i+1)*RESET_AFTER]:
-                    logits = self.inference(tree, True)
-                    predictions = self.predictions(logits)
-                    root_prediction = sess.run(predictions)[0]
+                    logits = self.inference(tree, True) #1.use tree to get raw score
+                    predictions = self.predictions(logits) #2.use logit to get index of predicted label.
+                    root_prediction = sess.run(predictions)[0] #3.evaluate the the index of predicted label.
                     if get_loss:
                         root_label = tree.root.label
-                        loss = sess.run(self.loss(logits, [root_label]))
+                        loss = sess.run(self.loss(logits, [root_label])) #4.calucate loss by using softmax,cross entropy, and regularization
                         losses.append(loss)
                     results.append(root_prediction)
         return results, losses
 
-    def run_epoch(self, new_model = False, verbose=True):
+    def run_epoch(self, new_model = False, verbose=True): #Run one epoch
         step = 0
         loss_history = []
+        #1.go though each traing data by taking forward pass,calcuate loss and update weights
         while step < len(self.train_data):
             with tf.Graph().as_default(), tf.Session() as sess:
                 self.add_model_vars()
@@ -217,17 +262,17 @@ class RNN_Model():
                     init = tf.initialize_all_variables()
                     sess.run(init)
                 else:
-                    saver = tf.train.Saver()
-                    saver.restore(sess, './weights/%s.temp'%self.config.model_name)
+                    saver = tf.train.Saver() #Saves and restores variables
+                    saver.restore(sess, './weights/%s.temp'%self.config.model_name) #Restore variable using saver
                 for _ in xrange(RESET_AFTER):
                     if step>=len(self.train_data):
                         break
-                    tree = self.train_data[step]
-                    logits = self.inference(tree)
+                    tree = self.train_data[step] #1.get training tree
+                    logits = self.inference(tree) #2.forward pass
                     labels = [l for l in tree.labels if l!=2]
-                    loss = self.loss(logits, labels)
-                    train_op = self.training(loss)
-                    loss, _ = sess.run([loss, train_op])
+                    loss = self.loss(logits, labels) #3.calucate loss
+                    train_op = self.training(loss) #4.set up traing Ops
+                    loss, _ = sess.run([loss, train_op]) #5.evaluate loss(also update weights)
                     loss_history.append(loss)
                     if verbose:
                         sys.stdout.write('\r{} / {} :    loss = {}'.format(
@@ -238,7 +283,9 @@ class RNN_Model():
                 if not os.path.exists("./weights"):
                     os.makedirs("./weights")
                 saver.save(sess, './weights/%s.temp'%self.config.model_name)
-        train_preds, _ = self.predict(self.train_data, './weights/%s.temp'%self.config.model_name)
+                
+        #2.calucate training accuracy, validation accuracy after each epoch
+        train_preds, _ = self.predict(self.train_data, './weights/%s.temp'%self.config.model_name) 
         val_preds, val_losses = self.predict(self.dev_data, './weights/%s.temp'%self.config.model_name, get_loss=True)
         train_labels = [t.root.label for t in self.train_data]
         val_labels = [t.root.label for t in self.dev_data]
@@ -260,8 +307,9 @@ class RNN_Model():
         best_val_loss = float('inf')
         best_val_epoch = 0
         stopped = -1
-        for epoch in xrange(self.config.max_epochs):
+        for epoch in xrange(self.config.max_epochs): #loop over max_epochs by calling run_epoch function.
             print 'epoch %d'%epoch
+            #1.training one epoch.
             if epoch==0:
                 train_acc, val_acc, loss_history, val_loss = self.run_epoch(new_model=True)
             else:
@@ -270,20 +318,20 @@ class RNN_Model():
             train_acc_history.append(train_acc)
             val_acc_history.append(val_acc)
 
-            #lr annealing
+            #2.lr annealing (optional, but it can improve perfomrance of model.)
             epoch_loss = np.mean(loss_history)
-            if epoch_loss>prev_epoch_loss*self.config.anneal_threshold:
+            if epoch_loss>prev_epoch_loss*self.config.anneal_threshold: #if epoch loss is not decreasing after one epoch, then decay 'learn rate' 
                 self.config.lr/=self.config.anneal_by
                 print 'annealed lr to %f'%self.config.lr
             prev_epoch_loss = epoch_loss
 
-            #save if model has improved on val
+            #3.save if model has improved on val
             if val_loss < best_val_loss:
-                 shutil.copyfile('./weights/%s.temp'%self.config.model_name, './weights/%s'%self.config.model_name)
+                 shutil.copyfile('./weights/%s.temp'%self.config.model_name, './weights/%s'%self.config.model_name) #copy file from source to target location.
                  best_val_loss = val_loss
                  best_val_epoch = epoch
 
-            # if model has not imprvoved for a while stop
+            #4.if model has not imprvoved for a while stop (we can stop training by using 'break' when meet condition)
             if epoch - best_val_epoch > self.config.early_stopping:
                 stopped = epoch
                 #break
@@ -308,8 +356,8 @@ class RNN_Model():
 def test_RNN():
     """Test RNN model implementation.
 
-    You can use this function to test your implementation of the Named Entity
-    Recognition network. When debugging, set max_epochs in the Config object to 1
+    You can use this function to test your implementation of the Sentiment Classification.
+    When debugging, set max_epochs in the Config object to 1
     so you can rapidly iterate.
     """
     config = Config()
@@ -327,7 +375,8 @@ def test_RNN():
 
     print 'Test'
     print '=-=-='
-    predictions, _ = model.predict(model.test_data, './weights/%s'%model.config.model_name)
+    #calcualate accuracy on test dataset
+    predictions, _ = model.predict(model.test_data, './weights/%s'%model.config.model_name) #make prediction by using learned model(including recover saved parameters)
     labels = [t.root.label for t in model.test_data]
     test_acc = np.equal(predictions, labels).mean()
     print 'Test acc: {}'.format(test_acc)
