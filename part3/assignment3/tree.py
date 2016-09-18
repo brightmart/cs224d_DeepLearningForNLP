@@ -10,8 +10,8 @@ UNK = 'UNK'
 
 class Node:  # a node in the tree
     def __init__(self, label, word=None):
-        self.label = label
-        self.word = word
+        self.label = label ##usualy each node has a label.
+        self.word = word ##if it is leaf node, it is a word vector.
         self.parent = None  # reference to parent
         self.left = None  # reference to left child
         self.right = None  # reference to right child
