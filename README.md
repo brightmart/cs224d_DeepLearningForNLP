@@ -32,7 +32,8 @@ PSet2:
 get to practice backpropagation and training deep networks to attack the task of Named Entity Recognition: predicting whether a given word, in context, represents one of four categories: • Person (PER) • Organization (ORG) • Location (LOC) • Miscellaneous (MISC)
 Process:
 1)word embeding to get word vectors 词向量化----><br/>
-2) represent context as a “window” consisting of a word concatenated with its immediate neighbors：上线文--将左右两个边的词连接<br/>
+                                    上线文（将左右两个边的词连接）<br/>
+2) represent context as a “window” consisting of a word concatenated with its immediate neighbors：<br/>
     x(t) = [xt−1L, xtL, xt+1L] ∈R3d <br/>
 3)  1-hidden-layer neural network   神经网络<br/>
     h = tanh(x(t)W + b1) <br/>
@@ -40,8 +41,19 @@ Process:
      y^=softmax(hU+b2)<br/>
 5)  evaluate cross-entropy loss:    计算损失<br/>
      J=CE(y,y^)=sum(y*logy^)<br/>
-6)  back-prop                         反向传播 <br/>
+6)  back-prop                       反向传播 <br/>
 
-3 Recurrent Neural Networks: Language Modeling (45 points)
+3 Recurrent Neural Networks: Language Modeling (45 points) <br/>
+Given words x1,...,xt, a language model predicts the following word xt+1 by modeling: P(xt+1 = vj | xt,...,x1) <br/>
+PROCESS:<br/>
+implement a recurrent neural network language model, which uses feedback information in the hidden layer to model the “history” <br/> xt,xt−1,...,x1. Formally, the model is, for t = 1,...,n−1:
+1) word embeding:                                           词向量化---><br/>
+2) get next hidden state:                                   计算下一个隐藏层的状态(循环：从state0开始到final state)<br/>
+      h(t) = sigmoid(h(t−1)*H + e*I + b1) <br/> 
+3) get possibilities after linear layer and compute softmax  线性运算后计算softmax后的概率<br/>
+      y^(t) = softmax(h(t)U + b2) <br/>
+4) compute sequence loss:                                    计算序列的损失 <br/>
+5) back-prop                                                 反向传播 <br/>
+
 
 PSet3: 1 RNN’s (Recursive Neural Network)
