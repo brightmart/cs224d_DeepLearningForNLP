@@ -17,11 +17,11 @@ skipgram,negative sampling,CBOW
 
 Q4: Sentiment Analysis 情感分析 (20 points) <br/>
 Process:
-1)word embeding--->
-2)average word vector to get features(X)--->
-3)dot product with Learnable Weight(W)---->
-4)Sofmtax to get possibility
-5)calculate Loss, and Gradient, update W
+1)word embeding---><br/>
+2)average word vector to get features(X)---><br/>
+3)dot product with Learnable Weight(W)----><br/>
+4)Sofmtax to get possibility<br/>
+5)calculate Loss, and Gradient, update W<br/>
 with the word vectors you trained, we are going to perform a simple sentiment analysis. For each sentence in the Stanford Sentiment Treebank dataset, we are going to use the average of all the word vectors in that sentence as its feature, and try to predict the sentiment level of the said sentence. The sentiment level of the phrases are represented as real values in the original dataset, here we’ll just use ﬁve classes:
 “very negative”, “negative”, “neutral”, “positive”, “very positive”
 
