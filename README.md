@@ -28,7 +28,20 @@ with the word vectors you trained, we are going to perform a simple sentiment an
 
 PSet2:
 1 Tensorﬂow Softmax (20 points) 
-2 Deep Networks for Named Entity Recognition (35 points) 
+2 Deep Networks for Named Entity Recognition 命名实体识别 (35 points) 
+get to practice backpropagation and training deep networks to attack the task of Named Entity Recognition: predicting whether a given word, in context, represents one of four categories: • Person (PER) • Organization (ORG) • Location (LOC) • Miscellaneous (MISC)
+Process:
+1)word embeding to get word vectors 词向量化----><br/>
+2) represent context as a “window” consisting of a word concatenated with its immediate neighbors：上线文--将左右两个边的词连接<br/>
+    x(t) = [xt−1L, xtL, xt+1L] ∈R3d <br/>
+3)  1-hidden-layer neural network   神经网络<br/>
+    h = tanh(x(t)W + b1) <br/>
+4)  compute our prediction: softmax 线性计算后的softmax值<br/>
+     y^=softmax(hU+b2)<br/>
+5)  evaluate cross-entropy loss:    计算损失<br/>
+     J=CE(y,y^)=sum(y*logy^)<br/>
+6)  back-prop                         反向传播 <br/>
+
 3 Recurrent Neural Networks: Language Modeling (45 points)
 
 PSet3: 1 RNN’s (Recursive Neural Network)
