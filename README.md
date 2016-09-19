@@ -6,8 +6,9 @@ Course Description
 
 Natural language processing (NLP) is one of the most important technologies of the information age.  <br/>
 Understanding complex language utterances is also a crucial part of artificial intelligence. Applications of NLP are everywhere because people communicate most everything in language: web search, advertisement, emails, customer service, language translation, radiology reports, etc. There are a large variety of underlying tasks and machine learning models powering NLP applications. Recently, deep learning approaches have obtained very high performance across many different NLP tasks. These models can often be trained with a single end-to-end model and do not require traditional, task-specific feature engineering. In this spring quarter course students will learn to implement, train, debug, visualize and invent their own neural network models. The course provides a deep excursion into cutting-edge research in deep learning applied to NLP. The final project will involve training a complex recurrent neural network and applying it to a large scale NLP problem. On the model side we will cover word vector representations, window-based neural networks, recurrent neural networks, long-short-term-memory models, recursive neural networks, convolutional neural networks as well as some very novel models involving a memory component. Through lectures and programming assignments students will learn the necessary engineering tricks for making neural networks work on practical problems.
+
 =============================================================================================================
-PSet1:  <br/>
+PSet1: 情感分析  <br/>
 Q1: Softmax (10 points)<br/>
 
 Q2: Neural Network Basics 神经网络基础(30 points) <br/>
@@ -28,11 +29,11 @@ with the word vectors you trained, we are going to perform a simple sentiment an
 
 
 =============================================================================================================
-PSet2:<br/>
+PSet2: 命名实体识别&& 循环神经网络下预测下一个词<br/>
 1 Tensorﬂow Softmax (20 points)<br/> 
-2 Deep Networks for Named Entity Recognition 命名实体识别 (35 points) 
+2 Deep Networks for Named Entity Recognition 命名实体识别 (35 points) <br/>
 get to practice backpropagation and training deep networks to attack the task of Named Entity Recognition: predicting whether a given word, in context, represents one of four categories: • Person (PER) • Organization (ORG) • Location (LOC) • Miscellaneous (MISC)
-Process:
+Process:<br/>
 1)word embeding to get word vectors 词向量化----><br/>
                                     上线文（将左右两个边的词连接）<br/>
 2) represent context as a “window” consisting of a word concatenated with its immediate neighbors：<br/>
@@ -61,10 +62,10 @@ implement a recurrent neural network language model, which uses feedback informa
 =============================================================================================================
 PSet3:  Recursive Neural Network：递归神经网络下的情感分析  <br/>
 sentiment classes: Really Negative, Negative, Neutral, Positive, and Really Positive  <br/>
-PROCESS:
-1)  Concatenate node from left and right,linear layer,Relu layer.使用树形结构底层左右两个节点的线性运算，再计算RELU值(迭代)
-h = max([ h_Left,h_Right]*W + b,0) 
-2) Linear layer, Softmax                                          线性运算再计算概率
-y = softmax(h*U + b)
-3) Compute loss                                                   计算损失
-4) Back-prop                                                      反向传播
+PROCESS:<br/>
+1)  Concatenate node from left and right,linear layer,Relu layer.使用树形结构底层左右两个节点的线性运算，再计算RELU值(迭代)<br/>
+h = max([ h_Left,h_Right]*W + b,0) <br/>
+2) Linear layer, Softmax                                         线性运算再计算概率<br/>
+y = softmax(h*U + b)<br/>
+3) Compute loss                                                  计算损失<br/>
+4) Back-prop                                                     反向传播<br/>
